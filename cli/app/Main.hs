@@ -23,4 +23,3 @@ mainLoop env = do
   -- execute function (if it function)
   traverse interpret maybeFunc
   mainLoop env'
-

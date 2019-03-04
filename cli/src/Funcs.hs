@@ -5,6 +5,7 @@ module Funcs
     , wc
     , pwd
     , exit
+    , grep
     ) where
 
 import           Control.Monad    (forM, forM_, when)
@@ -14,6 +15,9 @@ import           System.Directory (getCurrentDirectory)
 import           System.Exit      (exitSuccess)
 import           System.IO        (readFile)
 import           Types
+import           GrepArguments (Flag (..), parseOpts)
+import           Text.Regex.PCRE.Light
+import qualified Data.ByteString.Char8 as B
 
 
 funcsList :: [(FuncName, FuncType)]
@@ -21,7 +25,8 @@ funcsList = [ ("cat" , cat)
             , ("echo", echo)
             , ("wc"  , wc)
             , ("pwd" , pwd)
-            , ("exit", exit) ]
+            , ("exit", exit)
+            , ("grep", grep) ]
 
 
 -- cat ----------------------------------------------------------------------------------------------
@@ -98,3 +103,26 @@ exit _ mode =
 -- nothing
     Pipe   -> return ""
 
+
+-- grep ---------------------------------------------------------------------------------------------
+grep :: FuncType
+grep args mode = do
+  (flags, pattern, files) <- parseOpts args
+  case mode of
+    Normal -> do
+      res <- forM files $ \fileName -> do
+        content <- getContentIfExist fileName
+        return $ if null content
+                   then ""
+                   else maybe "" (unlines . fmap B.unpack) $ doMatch flags pattern content
+      return . unlines $ res
+    Pipe   -> if null files
+                   then error "grep args"
+                   else return $ maybe "" (unlines . fmap B.unpack) $ doMatch flags pattern $ concat files
+
+doMatch :: [Flag] -> String -> String -> Maybe [B.ByteString]
+doMatch flags pattern str = let r = compile (B.pack pattern) (getPCREOption <$> flags) in (match r (B.pack str) [])
+
+getPCREOption :: Flag -> PCREOption
+getPCREOption NonCase  = caseless
+getPCREOption HoleWord = newline_cr
