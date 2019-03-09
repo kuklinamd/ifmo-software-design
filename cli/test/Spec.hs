@@ -73,11 +73,11 @@ main = hspec $ do
 -----------------------------------------------------------------------------------------------------
   describe "[\", \', $] ->" $ do
     it "parseSpecSymbols: ' and $" $ do
-      (fst $ runState (parseSpecSymbols "$qw   as zx '$qw    $qw jkj' $qw") [("qw", "12")]) `shouldBe` Just ["12   as zx ", "$qw    $qw jkj", "12"]
+      (fst $ runState (parseSpecSymbols "$qw   as zx '$qw    $qw jkj' $qw") [("qw", "12")]) `shouldBe` Just ["12", "as", "zx", "$qw    $qw jkj", "12"]
     it "parseSpecSymbols: \" and $" $ do
-      (fst $ runState (parseSpecSymbols "$qw   as zx '$qw    $qw jkj' $qw") [("qw", "12")]) `shouldBe` Just ["12   as zx ","$qw    $qw jkj","12"]
+      (fst $ runState (parseSpecSymbols "\"$qw   as zx '$qw    $qw jkj' $qw\"") [("qw", "12")]) `shouldBe` Just ["12   as zx '12    12 jkj' 12"]
     it "parseSpecSymbols: \" and ' and $" $ do
-      (fst $ runState (parseSpecSymbols "'$qw   $as' \"zx '$qw \"   $qw $as") [("qw", "12"), ("as", "trdn rt")]) `shouldBe` Just ["","$qw   $as","zx '12 ","12","trdn","rt"]
+      (fst $ runState (parseSpecSymbols "'$qw   $as' \"zx  '$qw \"   $qw $as") [("qw", "12"), ("as", "trdn rt")]) `shouldBe` Just ["$qw   $as","zx  '12 ", "12", "trdn", "rt"]
 -----------------------------------------------------------------------------------------------------
   describe "funcs: general ->" $ do
     it "pwd" $ do
