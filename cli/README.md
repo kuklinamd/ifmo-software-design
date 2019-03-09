@@ -8,7 +8,7 @@
  - Open cmd and put
    - ```
      stack build
-     stack ghc -- -O app/Main.hs src/Base.hs src/CustomFuncs.hs
+     stack ghc -- -O app/Main.hs src/Types.hs src/Funcs.hs src/Interpreter.hs src/Lib.hs 
      ```
  - Get the executable file and put it somewhere
    - app/.Main or app/Main.exe
