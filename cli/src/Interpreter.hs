@@ -1,10 +1,13 @@
+{-# LANGUAGE ScopedTypeVariables #-}
+
 module Interpreter
     ( interpret
     , interpretTest
     ) where
 
-import           Funcs               (funcsList)
-import           System.Process      (readProcess)
+import           Control.Exception
+import           Funcs             (funcsList)
+import           System.Process    (readProcess)
 import           Types
 
 
@@ -14,32 +17,42 @@ call :: FuncInfo -> Mode -> IO String
 call (name, args) mode =
   case lookup name funcsList of
     Just func -> func args mode
-    Nothing   -> readProcess name args ""
+    Nothing   -> catch
+                   (readProcess name args "")
+                   (\(e :: SomeException) -> return $ name ++ ": command not found\n")
 
 
 -- interpret funcion or pipe
 interpret :: [FuncInfo] -> IO ()
 interpret []                = putStrLn "Empty pipe"
--- first function in pipe execute in `normal` mode
--- others - with mode `pipe`
+interpret [fi@("exit", _)]  = call fi Normal >>= putStr
 interpret (funcInfo : rest) = call funcInfo Normal >>= go rest
   where
     go :: [FuncInfo] -> String -> IO ()
-    go []                       output = putStrLn output
+    go []                       output = putStr output
     go (fi@(name, args) : rest) output
--- funcion from pipe ignore output if has custom arguments
-      | null args = call (name, [output]) Pipe >>= go rest
-      | otherwise = call fi Pipe >>= go rest
+   -- funcion from the pipe ignore output if has custom arguments
+      | "exit" <- name = call fi Pipe >>= go rest
+      | null args, "echo" <- name = call (name, []) Pipe >>= go rest
+      | null args     = call (name, [output]) Pipe >>= go rest
+      | "cat" <- name = call fi Normal >>= go rest
+      | "wc" <- name  = call fi Normal >>= go rest
+      | otherwise     = call fi Pipe >>= go rest
 
 
 -- helpful function for testing in test/Spec.hs
 interpretTest :: [FuncInfo] -> IO String
 interpretTest []                = return "Empty pipe"
+interpretTest [fi@("exit", _)]  = call fi Normal
 interpretTest (funcInfo : rest) = call funcInfo Normal >>= go rest
   where
     go :: [FuncInfo] -> String -> IO String
     go []                       output = return output
     go (fi@(name, args) : rest) output
+      | "exit" <- name = call fi Pipe >>= go rest
+      | null args, "echo" <- name = call (name, []) Pipe >>= go rest
       | null args = call (name, [output]) Pipe >>= go rest
+      | "cat" <- name = call fi Normal >>= go rest
+      | "wc" <- name = call fi Normal >>= go rest
       | otherwise = call fi Pipe >>= go rest
 

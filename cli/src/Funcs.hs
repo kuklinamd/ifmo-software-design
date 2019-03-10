@@ -26,6 +26,7 @@ funcsList = [ ("cat" , cat)
 
 -- cat ----------------------------------------------------------------------------------------------
 cat :: FuncType
+cat []   _    = return "cat: no arguments"
 cat args mode =
   case mode of
 -- for every arguments try to get content
@@ -33,15 +34,12 @@ cat args mode =
       allContent <- forM args getContentIfExist
       return . init . unlines $ allContent
 -- return input
-    Pipe   -> do
-      when (null args) $ putStrLn "null args cat"
-      return . head $ args
+    Pipe   -> return . head $ args
 
 
 -- echo ---------------------------------------------------------------------------------------------
 echo :: FuncType
-echo args _ = return . unwords $ args
-
+echo args _ = return . (++ "\n") . unwords $ args
 
 -- wc -----------------------------------------------------------------------------------------------
 wc :: FuncType
@@ -84,7 +82,7 @@ prettyPrint num =
 
 -- pwd ----------------------------------------------------------------------------------------------
 pwd :: FuncType
-pwd _ _ = getCurrentDirectory
+pwd _ _ = (++ "\n") <$> getCurrentDirectory
 
 
 -- exit ---------------------------------------------------------------------------------------------

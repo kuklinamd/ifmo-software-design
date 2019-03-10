@@ -12,4 +12,4 @@ getContentIfExist fileName = do
   fileEx <- doesFileExist fileName
   if fileEx
     then readFile fileName
-    else putStrLn ("Error file path: " ++ fileName) >> return ""
+    else putStrLn (fileName ++ ": No such file or directory") >> return ""

@@ -14,7 +14,7 @@ main = mainLoop []
 
 mainLoop :: Env -> IO ()
 mainLoop env = do
-  hSetBuffering stdout NoBuffering  
+  hSetBuffering stdout NoBuffering
   putStr "cli> "
   -- get user input
   input <- getLine
