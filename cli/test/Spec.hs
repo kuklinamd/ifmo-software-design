@@ -5,6 +5,8 @@ import Interpreter
 import Parser
 import Types
 import Control.Monad.State (runState)
+import System.Directory
+import Data.List
 
 
 main :: IO ()
@@ -114,3 +116,27 @@ main = hspec $ do
       out <- echo ["12", " $qw  ", "afewf"] Normal
       out `shouldBe` "12  $qw   afewf\n"
 
+----------------------------------------------------------------------------------------------------
+  describe "funcs: cd ->" $ do
+   it "cd" $ do
+      out <- cd [] Normal
+      out `shouldBe` ""
+  it "cd: arg" $ do
+      out <- cd ["/tmp"] Normal
+      pth <- pwd [] Normal
+      pth `shouldBe` "/tmp\n"
+
+----------------------------------------------------------------------------------------------------
+  describe "funcs: ls ->" $ do
+    it "ls" $ do
+      out <- ls [] Normal
+      cur <- getCurrentDirectory
+      cont <- listDirectory cur
+      let list = intercalate "\n" cont ++ "\n"
+      out `shouldBe` list
+
+    it  "ls /tmp" $ do
+      out <- ls ["/tmp"] Normal
+      cont <- listDirectory "/tmp"
+      let list = intercalate "\n" cont ++ "\n"
+      out `shouldBe` list

@@ -5,23 +5,29 @@ module Funcs
     , wc
     , pwd
     , exit
+    , ls
+    , cd
     ) where
 
-import           Control.Monad    (forM, forM_, when)
-import           Data.Foldable    (foldl')
-import           Lib              (getContentIfExist)
-import           System.Directory (getCurrentDirectory)
-import           System.Exit      (exitSuccess)
-import           System.IO        (readFile)
+import           Control.Monad     (forM, forM_, when)
+import           Data.Foldable     (foldl')
+import           Lib               (getContentIfExist)
+import           System.Directory  (getCurrentDirectory,listDirectory,setCurrentDirectory)
+import           System.Exit       (exitSuccess)
+import           System.IO         (readFile)
 import           Types
+import           Data.List         (intercalate)
 
+import           Control.Exception (SomeException, try)
 
 funcsList :: [(FuncName, FuncType)]
 funcsList = [ ("cat" , cat)
             , ("echo", echo)
             , ("wc"  , wc)
             , ("pwd" , pwd)
-            , ("exit", exit) ]
+            , ("exit", exit)
+            , ("cd"  , cd)
+            , ("ls"  , ls)]
 
 
 -- cat ----------------------------------------------------------------------------------------------
@@ -96,3 +102,26 @@ exit _ mode =
 -- nothing
     Pipe   -> return ""
 
+-- cd -----------------------------------------------------------------------------------------------
+cd :: FuncType
+cd [] _ = return ""
+cd (arg:_) _ = do
+    res <- try (setCurrentDirectory arg) :: IO (Either SomeException ())
+    case res of
+        Left ex -> return $ "Unable to set new current directory: " ++ arg ++ ".\n"
+        Right _ -> return ""
+
+-- ls -----------------------------------------------------------------------------------------------
+ls :: FuncType
+ls [] mode = do
+  curE <- try getCurrentDirectory :: IO (Either SomeException String)
+  case curE of
+    Left ex -> return $ "Current directory doesn't exists.\n"
+    Right cur -> ls [cur] mode
+
+ls (arg:_) _ = do
+  list <- try (listDirectory arg) :: IO (Either SomeException [String])
+  pure $ lsDir list
+
+lsDir (Left _) = "Unable to get the list of files.\n"
+lsDir (Right list) = intercalate "\n" list ++ "\n"
