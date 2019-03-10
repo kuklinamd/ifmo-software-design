@@ -108,7 +108,7 @@ cd [] _ = return ""
 cd (arg:_) _ = do
     res <- try (setCurrentDirectory arg) :: IO (Either SomeException ())
     case res of
-        Left ex -> return $ "Unable to set new current directory: " ++ arg ++ "\n"
+        Left ex -> return $ "Unable to set new current directory: " ++ arg ++ ".\n"
         Right _ -> return ""
 
 -- ls -----------------------------------------------------------------------------------------------
@@ -116,12 +116,12 @@ ls :: FuncType
 ls [] mode = do
   curE <- try getCurrentDirectory :: IO (Either SomeException String)
   case curE of
-    Left ex -> return $ "Current directory doesn't exists\n"
+    Left ex -> return $ "Current directory doesn't exists.\n"
     Right cur -> ls [cur] mode
 
 ls (arg:_) _ = do
   list <- try (listDirectory arg) :: IO (Either SomeException [String])
   pure $ lsDir list
 
-lsDir (Left _) = "Unable to get the list of directories\n"
+lsDir (Left _) = "Unable to get the list of files.\n"
 lsDir (Right list) = intercalate "\n" list ++ "\n"
